@@ -13,7 +13,7 @@ export class ClassService {
   private classes: Class[] = [
     {
       id: uuidv4(),
-      className: 'Class A'
+      className: 'Math'
     }
   ]
 

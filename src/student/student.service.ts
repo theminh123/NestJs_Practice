@@ -15,7 +15,12 @@ export class StudentService {
     {
       id: uuidv4(),
       studentName: 'Minh',
-      className: 'Class A'
+      className: 'Math'
+    },
+    {
+      id: uuidv4(),
+      studentName: 'John',
+      className: 'Science'
     }
   ];
 
@@ -102,8 +107,8 @@ export class StudentService {
   }
 
   getStudentByName(studentName: string) {
-    const student = this.students.filter(s => s.studentName === studentName);
-    if(!student){
+    const student = this.students.filter(s => s.studentName.toLowerCase() === studentName.toLowerCase());
+    if(student.length === 0){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND
@@ -113,8 +118,8 @@ export class StudentService {
   }
 
   getStudentByClassName(className: string) {
-    const student = this.students.filter(s => s.className === className);
-    if(!student){
+    const student = this.students.filter(s => s.className.toLowerCase() === className.toLowerCase());
+    if(student.length === 0){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND

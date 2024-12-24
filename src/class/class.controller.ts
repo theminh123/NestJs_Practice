@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Put, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, ValidationPipe } from '@nestjs/common';
 import { ClassService } from './class.service';
 import { classDto } from './dto/classDto';
 import { Roles } from 'src/roles/decorators/roles.decorator';
@@ -14,15 +14,21 @@ export class ClassController {
     return this.classService.create(classDto);
   }
 
+  @Get()
+  @Roles(Role.Admin, Role.Principal, Role.Teacher)
+  getClasses() {
+    return this.classService.getClasses();
+  }
+
   @Put()
   @Roles(Role.Admin, Role.Principal)
   update(@Body(new ValidationPipe({ transform: true })) classDto: classDto) {
     return this.classService.update(classDto.getClassID(), classDto);
   }
 
-  @Get(':id')
+  @Get('searchid/:id')
   @Roles(Role.Admin, Role.Principal, Role.Teacher)
-  getClassByID(@Body(new ValidationPipe({ transform: true })) id: string) {
+  getClassByID(@Param('id') id: string){
     return this.classService.getClassByID(id);
   }
 

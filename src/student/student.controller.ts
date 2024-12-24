@@ -27,25 +27,25 @@ export class StudentController {
   getAllStudent(): Student[] {
     return this.studentService.getAllStudent();}
 
-  @Get(':id')
+  @Get('searchid/:id')
   @Roles(Role.Teacher, Role.Admin)
   getStudentByID(@Param('id') id: string): Student {
     return this.studentService.getStudentByID(id);
   }
 
-  @Get()
+  @Get('/searchname')
   @Roles(Role.Teacher, Role.Admin)
   getStudentByName(@Query('name') studentName: string): Student[] {
     return this.studentService.getStudentByName(studentName);
   }
 
-  @Get()
+  @Get('/searchclass')
   @Roles(Role.Teacher, Role.Admin)
   getStudentByClassName(@Query('className') className: string): Student[] {
     return this.studentService.getStudentByClassName(className);
   }
 
-  @Delete(':id')
+  @Delete('/:id')
   @Roles(Role.Teacher, Role.Admin)
   delete(@Param('id') id: string) {
     return this.studentService.delete(id);
