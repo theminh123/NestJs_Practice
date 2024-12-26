@@ -1,53 +1,52 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import {v4 as uuidv4} from 'uuid';
 import { classDto } from './dto/classDto';
-import { StudentService } from 'src/student/student.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Class } from './entities/class.entity';
+import { Repository } from 'typeorm';
+import { Student } from 'src/student/entities/student.entity';
 
-export interface Class {
-  id: string;
-  className: string;
-}
+
 @Injectable()
 export class ClassService {
+  constructor(
+    @InjectRepository(Class)
+    private readonly classRepository: Repository<Class>,
+  
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
+  ) {}
 
-  private classes: Class[] = [
-    {
-      id: uuidv4(),
-      className: 'Math'
-    }
-  ]
-
-
-  getClasses() : Class[] {
-    return this.classes;
+  async getClasses() : Promise<Class[]> {
+    return await this.classRepository.find();
   }
 
-  create(classDto: classDto) {
-    const isClassExist = this.classes.some(c => c.className === classDto.getClassName());
+  async create(classDto: classDto) {
+
+    const isClassExist = await this.classRepository.findOne({where: {className: classDto.getClassName()}});
+
     if(isClassExist){
       throw new HttpException(
         { message: 'Class already exist.' },
         HttpStatus.BAD_REQUEST
       );
     }
-
-    this.classes.push({
-      id: uuidv4(),
+    const newClass = this.classRepository.create({
       className: classDto.getClassName()
-    });    
-    return this.classes;
+    });
+    return await this.classRepository.save(newClass);
   }
 
-  update(id: string, classDto: classDto) {
-    const classIndex = this.classes.findIndex(c => c.id === id);
-    if(classIndex === -1){
+  async update(id: string, classDto: classDto) {
+    const cla = await this.classRepository.findOne({where: {id: id}});
+
+    if(!cla){
       throw new HttpException(
         { message: 'Class not found.' },
         HttpStatus.NOT_FOUND
       );
     }
 
-    const isClassExist = this.classes.some(c => c.className === classDto.getClassName());
+    const isClassExist = await this.classRepository.findOne({where: {className: classDto.getClassName()}});
     if(isClassExist){
       throw new HttpException(
         { message: 'Class already exist.' },
@@ -55,12 +54,13 @@ export class ClassService {
       );
     }
 
-    this.classes[classIndex].className = classDto.getClassName();
-    return this.classes;
+    return await this.classRepository.update(cla, {className: classDto.getClassName()});
+      
   }
 
-  getClassByID(id: string) {
-    const cla = this.classes.find(c => c.id === id);
+  async getClassByID(id: string) {
+    const cla = await this.classRepository.findOne({where: {id: id}});
+
     if(!cla){
       throw new HttpException(
         { message: 'Class not found.' },
@@ -70,15 +70,24 @@ export class ClassService {
     return cla;
   }
 
-  delete(id: string){
-    const classIndex = this.classes.findIndex(c => c.id === id);    
-    if(classIndex === -1){
+  async delete(id: string){
+    const cla = await this.classRepository.findOne({where: {id: id}});
+
+    if(!cla){
       throw new HttpException(
         { message: 'Class not found.' },
         HttpStatus.NOT_FOUND
       );
     }
 
-    this.classes.splice(classIndex, 1);
+    const studentInClass = await this.studentRepository.count({where:  {className: cla.className}});
+    if(studentInClass > 0){
+      throw new HttpException(
+        { message: 'This class still have student.' },
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    return await this.classRepository.remove(cla);
   }
 }

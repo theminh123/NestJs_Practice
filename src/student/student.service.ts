@@ -1,68 +1,67 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { StudentDto } from './dto/studentDto';
-import {v4 as uuidv4} from 'uuid';
-import { ClassService } from '../class/class.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Student } from './entities/student.entity';
+import { Repository } from 'typeorm';
+import { Class } from 'src/class/entities/class.entity';
 
 
-export interface Student {
-  id: string;
-  studentName: string;
-  className: string;
-}
+
 @Injectable()
 export class StudentService {
-  private students: Student[] = [
-    {
-      id: uuidv4(),
-      studentName: 'Minh',
-      className: 'Math'
-    },
-    {
-      id: uuidv4(),
-      studentName: 'John',
-      className: 'Science'
-    }
-  ];
+  constructor(
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
 
-  constructor(private classService: ClassService) {}
-  create(studentDto: StudentDto) {
-    const isClassExist =  this.classService.getClasses().some(c => c.className === studentDto.getStudentClassName());
+    @InjectRepository(Class)
+    private readonly classRepository: Repository<Class>,
+  ) {}
+
+
+  async create(studentDto: StudentDto) {
+    const isClassExist = await this.classRepository.findOne({ where: { className: studentDto.getStudentClassName() } });
+
     if (!isClassExist) {
       throw new HttpException(
         { message: 'Class not found.' },
         HttpStatus.NOT_FOUND
       );
     }
-    const isStudentExist = this.students.some(s => s.studentName === studentDto.getStudentName());
+    const isStudentExist = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('LOWER(student.studentName) = LOWER(:studentName)', { studentName: studentDto.getStudentName() })
+    .getOne();
+  
+
     if (isStudentExist) {
       throw new HttpException(
         { message: 'Student already exist.' },
         HttpStatus.BAD_REQUEST
       );
     }
-    this.students.push({
-      id: uuidv4(),
+
+    const student = this.studentRepository.create({
       studentName: studentDto.getStudentName(),
-      className: studentDto.getStudentClassName(),
-    });
-    return this.students;
+      className: studentDto.getStudentClassName() ,
+    })
+
+    return await this.studentRepository.save(student)
   }
 
-  update(id: string,studentDto: StudentDto) {
-    const studentIndex = this.students.findIndex(s => s.id === id);
-    if(studentIndex === -1){
+   async update(id: string,studentDto: StudentDto) {
+    const student = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('student.id = :id', { id })
+    .getOne();
+
+    if(!student){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND
       );
     }
-    this.students[studentIndex] = {
-      ...this.students[studentIndex],
-      studentName: studentDto.getStudentName(),
-      className: studentDto.getStudentClassName()
-    }
 
-    const isClassExist =  this.classService.getClasses().some(c => c.className === studentDto.getStudentClassName());
+    const isClassExist = await this.classRepository.findOne({ where: { className: studentDto.getStudentClassName() } });
     if (!isClassExist) {
       throw new HttpException(
         { message: 'Class not found.' },
@@ -70,33 +69,49 @@ export class StudentService {
       );
     }
 
-    const isStudentExist = this.students.some(s => s.studentName === studentDto.getStudentName());
+    const isStudentExist = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('LOWER(student.studentName) = LOWER(:studentName)', { studentName: studentDto.getStudentName() })
+    .getOne();
+
     if (isStudentExist) {
       throw new HttpException(
         { message: 'Student already exist.' },
         HttpStatus.BAD_REQUEST
       );
     }
-    return this.students;
+
+    student.studentName = studentDto.getStudentName();
+    student.className = studentDto.getStudentClassName();    
+
+     return await this.studentRepository.save(student);
   }
 
-  delete(id: string) {
-    const studentIndex = this.students.findIndex(s => s.id === id);    
-    if(studentIndex === -1){
+  async delete(id: string) {
+    const student = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('student.id = :id', { id })
+    .getOne();
+
+    if(!student){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND
       );
     }
-    this.students.splice(studentIndex, 1);
+    return await this.studentRepository.remove(student);
   }
 
-  getAllStudent(): Student[] {
-    return this.students;
+   async getAllStudent(): Promise<Student[]> {
+    return await this.studentRepository.find();
   }
 
-  getStudentByID(id: string) {
-    const student = this.students.find(s => s.id === id);
+  async getStudentByID(id: string) {
+    const student = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('student.id = :id', { id })
+    .getOne();
+
     if(!student){
       throw new HttpException(
         { message: 'Student not found.' },
@@ -106,9 +121,13 @@ export class StudentService {
     return student;
   }
 
-  getStudentByName(studentName: string) {
-    const student = this.students.filter(s => s.studentName.toLowerCase() === studentName.toLowerCase());
-    if(student.length === 0){
+  async getStudentByName(studentName: string): Promise<Student[]> {
+    const student = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('LOWER(student.studentName) LIKE :studentName', { studentName: `%${studentName.toLowerCase()}` })
+    .getMany();
+
+    if(student.length == 0){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND
@@ -117,9 +136,13 @@ export class StudentService {
     return student;
   }
 
-  getStudentByClassName(className: string) {
-    const student = this.students.filter(s => s.className.toLowerCase() === className.toLowerCase());
-    if(student.length === 0){
+  async getStudentByClassName(className: string): Promise<Student[]> {
+    const student = await this.studentRepository
+    .createQueryBuilder('student')
+    .where('LOWER(student.className) LIKE :className', { className: `%${className.toLowerCase()}%` }) 
+    .getMany();
+
+    if(student.length == 0){
       throw new HttpException(
         { message: 'Student not found.' },
         HttpStatus.NOT_FOUND

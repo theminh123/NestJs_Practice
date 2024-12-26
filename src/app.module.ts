@@ -6,10 +6,12 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from './filter/exception.filter';
 import { ClassModule } from './class/class.module';
 import { RolesGuard } from './roles/guards/roles.guard';
+import { DatabaseModule } from './database/database.module';
+import { ConfigModule } from '@nestjs/config';
 
 
 @Module({
-  imports: [StudentModule, ClassModule],
+  imports: [ConfigModule.forRoot({isGlobal: true, envFilePath: '.env'}), StudentModule, ClassModule, DatabaseModule],
   controllers: [AppController],
   providers: [AppService,
     {

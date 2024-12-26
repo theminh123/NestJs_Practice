@@ -1,17 +1,17 @@
 import { Body, Controller, Get, Post, Put, Param, Query, Delete} from '@nestjs/common';
 import  { StudentService } from './student.service';
-import { Student } from './student.service';
 import { StudentDto } from './dto/studentDto';
 import { ValidationPipe } from '@nestjs/common';
 import { Roles } from 'src/roles/decorators/roles.decorator';
 import { Role } from 'src/roles/enum/roles.enum';
+import { Student } from './entities/student.entity';
 
 
 @Controller('student')
 export class StudentController {
   constructor(private readonly studentService: StudentService) {}
  
-  @Post()
+  @Post('/create')
   @Roles(Role.Teacher, Role.Admin)
   create(@Body(new ValidationPipe({ transform: true })) StudentDto: StudentDto){
     return this.studentService.create(StudentDto);
@@ -24,30 +24,30 @@ export class StudentController {
   }
   @Get()
   @Roles(Role.Admin, Role.Principal, Role.Teacher)
-  getAllStudent(): Student[] {
+  getAllStudent(): Promise<Student[]>  {
     return this.studentService.getAllStudent();}
 
-  @Get('searchid/:id')
+  @Get('searchid')
   @Roles(Role.Teacher, Role.Admin)
-  getStudentByID(@Param('id') id: string): Student {
+  getStudentByID(@Body('id') id: string): Promise<Student> {
     return this.studentService.getStudentByID(id);
   }
 
   @Get('/searchname')
   @Roles(Role.Teacher, Role.Admin)
-  getStudentByName(@Query('name') studentName: string): Student[] {
+  getStudentByName(@Query('name') studentName: string): Promise<Student[]> {
     return this.studentService.getStudentByName(studentName);
   }
 
   @Get('/searchclass')
   @Roles(Role.Teacher, Role.Admin)
-  getStudentByClassName(@Query('className') className: string): Student[] {
+  getStudentByClassName(@Query('className') className: string): Promise<Student[]>  {
     return this.studentService.getStudentByClassName(className);
   }
 
-  @Delete('/:id')
+  @Delete()
   @Roles(Role.Teacher, Role.Admin)
-  delete(@Param('id') id: string) {
+  delete(@Body('id') id: string) {
     return this.studentService.delete(id);
   }
 }

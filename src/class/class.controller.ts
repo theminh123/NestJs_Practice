@@ -26,15 +26,15 @@ export class ClassController {
     return this.classService.update(classDto.getClassID(), classDto);
   }
 
-  @Get('searchid/:id')
+  @Get('searchid')
   @Roles(Role.Admin, Role.Principal, Role.Teacher)
-  getClassByID(@Param('id') id: string){
+  getClassByID(@Body('id') id: string){
     return this.classService.getClassByID(id);
   }
 
   @Delete()
   @Roles(Role.Admin, Role.Principal)
-  delete(@Body(new ValidationPipe({ transform: true })) id: string) {
+  delete(@Body("id") id: string) {
     return this.classService.delete(id);
   }
 
