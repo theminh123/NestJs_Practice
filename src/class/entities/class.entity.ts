@@ -1,10 +1,12 @@
+import { Field, ObjectType } from "@nestjs/graphql";
 import { AbstractEntity } from "src/database/abstract.entity";
-import { Student } from "src/student/entities/student.entity";
-import { Column, Entity, OneToMany} from "typeorm";
+import { Column, Entity} from "typeorm";
 
 @Entity()
+@ObjectType()
 export class Class extends AbstractEntity<Class> {
 
+  @Field()
   @Column({unique: true})
   className: string;
   

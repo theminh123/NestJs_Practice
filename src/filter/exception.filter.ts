@@ -1,33 +1,17 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { ErrorResponse } from 'src/error/errorResponse';
+import { ArgumentsHost, Catch} from "@nestjs/common";
+import { GqlArgumentsHost, GqlExceptionFilter } from "@nestjs/graphql";
+import { GraphQLError } from "graphql";
 
 @Catch()
-export class HttpExceptionFilter implements ExceptionFilter {
+export class GraphqlExceptionFilter implements GqlExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-
-    let status = HttpStatus.INTERNAL_SERVER_ERROR; 
-    let errorCode = 'INTERNAL_SERVER_ERROR';
-    let devMessage = 'An unexpected error occurred.';
-    let data = {};
-
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      errorCode = HttpStatus[status] ;
-      devMessage = exception.message;
-      data = {
-        "Query data" : request.query,
-        "Params data" : request.params,
-        "Body data" : request.body 
-      }; 
-    }
-
-    const errorResponse = new ErrorResponse(errorCode, devMessage, data);
-
-    response.status(status).json(errorResponse);
-
+    return new GraphQLError(exception.response.message || 'Internal Server Error', {
+      extensions: {
+        errorCode: exception.getResponse ? exception.getResponse()['error'] : 'Internal Server Error',
+        devMessage: exception.response.message || 'Internal Server Error',
+        data: GqlArgumentsHost.create(host).getArgs(),
+      },
+    });
   }
 }
+

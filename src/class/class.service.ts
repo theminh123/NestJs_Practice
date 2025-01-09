@@ -1,9 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException,Injectable, NotFoundException } from '@nestjs/common';
 import { classDto } from './dto/classDto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Class } from './entities/class.entity';
-import { Repository } from 'typeorm';
+import {  Repository } from 'typeorm';
 import { Student } from 'src/student/entities/student.entity';
+import { CLASS_EXISTS, CLASS_EXISTS_STUDENT, CLASS_NOT_FOUND } from 'src/error/constants';
 
 
 @Injectable()
@@ -22,16 +23,13 @@ export class ClassService {
 
   async create(classDto: classDto) {
 
-    const isClassExist = await this.classRepository.findOne({where: {className: classDto.getClassName()}});
+    const isClassExist = await this.classRepository.findOne({where: {className: classDto.className}});
 
     if(isClassExist){
-      throw new HttpException(
-        { message: 'Class already exist.' },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException(CLASS_EXISTS);
     }
     const newClass = this.classRepository.create({
-      className: classDto.getClassName()
+      className: classDto.className
     });
     return await this.classRepository.save(newClass);
   }
@@ -40,21 +38,15 @@ export class ClassService {
     const cla = await this.classRepository.findOne({where: {id: id}});
 
     if(!cla){
-      throw new HttpException(
-        { message: 'Class not found.' },
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundException(CLASS_NOT_FOUND);
     }
 
-    const isClassExist = await this.classRepository.findOne({where: {className: classDto.getClassName()}});
+    const isClassExist = await this.classRepository.findOne({where: {className: classDto.className}});
     if(isClassExist){
-      throw new HttpException(
-        { message: 'Class already exist.' },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException(CLASS_EXISTS);
     }
 
-    return await this.classRepository.update(cla, {className: classDto.getClassName()});
+    return await this.classRepository.update(cla, {className: classDto.className});
       
   }
 
@@ -62,10 +54,7 @@ export class ClassService {
     const cla = await this.classRepository.findOne({where: {id: id}});
 
     if(!cla){
-      throw new HttpException(
-        { message: 'Class not found.' },
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundException(CLASS_NOT_FOUND);
     }
     return cla;
   }
@@ -74,18 +63,12 @@ export class ClassService {
     const cla = await this.classRepository.findOne({where: {id: id}});
 
     if(!cla){
-      throw new HttpException(
-        { message: 'Class not found.' },
-        HttpStatus.NOT_FOUND
-      );
+      throw new NotFoundException(CLASS_NOT_FOUND);
     }
 
     const studentInClass = await this.studentRepository.count({where:  {className: cla.className}});
     if(studentInClass > 0){
-      throw new HttpException(
-        { message: 'This class still have student.' },
-        HttpStatus.BAD_REQUEST
-      );
+      throw new BadRequestException(CLASS_EXISTS_STUDENT);
     }
 
     return await this.classRepository.remove(cla);

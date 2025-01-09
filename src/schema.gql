@@ -1,0 +1,43 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Class {
+  className: String!
+  id: String!
+}
+
+type Mutation {
+  createClass(class: classDto!): Class!
+  createStudent(student: StudentDto!): Student!
+  deleteClass(id: String!): Class!
+  deleteStudent(id: String!): Student!
+  updateClass(class: classDto!, id: String!): Class!
+  updateStudent(id: String!, student: StudentDto!): Student!
+}
+
+type Query {
+  getAllStudent: [Student!]!
+  getClassByID(id: String!): Class!
+  getClasses: [Class!]!
+  getStudentByClassName(className: String!): [Student!]!
+  getStudentByID(id: String!): Student!
+  getStudentByName(studentName: String!): [Student!]!
+}
+
+type Student {
+  className: String!
+  id: String!
+  studentName: String!
+}
+
+input StudentDto {
+  className: String!
+  id: String! = "6536d956-1452-4173-a2f4-fcb6f2ed5494"
+  studentName: String!
+}
+
+input classDto {
+  className: String!
+  id: String! = "71186a53-0dd9-44ae-a3a6-d87ff0476cf2"
+}
